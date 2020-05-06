@@ -150,6 +150,7 @@ class convLSTM2(object):
         self.init_state1 = cell.zero_state(self.batch_size, dtype=tf.float32)
         # 按照时间序列展开
         self.outputs1, self.final_state1 = tf.nn.dynamic_rnn(cell, self.input_x1, initial_state=self.init_state1, time_major=False)
+
         #这里就很特殊，他不要求input去变为二维或者怎么样，input的shape为[batchsize,timestep,width,height,inputchannels],然后每一个timestep对应一个cell，所以一个timestep
         #的输入就是[batchsize,width,height,inputchannels],这刚好就是cell的输入，然后一个cell就能求一个state[batchsize,width,height,outputchannels]
         # 和总的序列的output[batchsize,timestep,width,height,outputchannels]
@@ -180,7 +181,7 @@ class convLSTM2(object):
             self.Ws_out1 = self._weight_variable([self.output_x1.shape[1],20],name = 'ws1')
             # self.bs_out1 = self._bias_variable([20],name ='bs1')
         with tf.name_scope('fea2'):
-            self.Ws_out2 = self._weight_variable([self.hidden_size, 20],name = 'ws2')
+            self.Ws_out2 = self._weight_variable([self.hidden_size, 20], name='ws2')
             # self.bs_out2 = self._bias_variable([20],name = 'bs2')
         with tf.name_scope('fea_out'):
             # self.fealay1 = tf.matmul(self.output_x1, self.Ws_out1) + self.bs_out1
