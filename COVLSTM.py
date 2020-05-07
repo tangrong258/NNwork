@@ -207,7 +207,7 @@ class convLSTM2(object):
         global_step = tf.Variable(0)
         LR = tf.train.exponential_decay(0.1,global_step,int(m / batch_size),0.96,staircase= True)
         self.train_op = tf.train.AdamOptimizer(LR).minimize(self.loss,global_step= global_step)
-        return  self.loss, self.train_op
+        return self.loss, self.train_op
 
     @staticmethod
     def ms_error(labels, logits):
@@ -219,7 +219,7 @@ class convLSTM2(object):
 
     def _bias_variable(self, shape, name='biases'):
         initializer = tf.constant_initializer(0.1)
-        return tf.get_variable( shape=shape,initializer=initializer,name=name)
+        return tf.get_variable( shape=shape, initializer=initializer,name=name)
 
 
 def train(sess,x1,y,x2):
@@ -250,8 +250,8 @@ def train(sess,x1,y,x2):
         state1,state2,pred,loss,_ = sess.run([model.final_state1,model.final_state2, model.pred,model.loss,model.train_op],feed_dict=feed_dict)
         tf.summary.scalar('loss', loss)
         merged = tf.summary.merge_all()
-        if i % 100 ==0:
-            print('lost: '+ str(i), loss)
+        if i % 100 == 0:
+            print('lost: ' + str(i), loss)
             result = sess.run(merged, feed_dict)
             writer.add_summary(result, i)
 
@@ -283,10 +283,10 @@ def test(sess,x1,y,x2):
         state1, state2, pred = sess.run([model.final_state1, model.final_state2, model.pred], feed_dict=feed_dict)
         xs = np.arange(0,output_size[0] * output_size[1])
         bar_width = 0.3
-        print("teststep:",i)
+        print("teststep:", i)
         for j in range(batch_size):
-            plt.bar(xs, y[j], bar_width,label = 'real',align="center",color = "g")
-            plt.bar(xs + bar_width, pred[j], bar_width,label = 'pred', align="center",color = "r")
+            plt.bar(xs, y[j], bar_width, label='real', align="center", color = "g")
+            plt.bar(xs + bar_width, pred[j], bar_width, label='pred', align="center", color="r")
             plt.legend()
             plt.savefig(r'D:\ZSNJAP01\flight\prediction\linedlyt' + '\\' + 'bar'+str(i*batch_size+j)+ '.png')
             plt.close()
