@@ -112,12 +112,17 @@ for i in range(1, len(sq_set_diff)):
     combine = np.vstack((data_combine, data_i))
     data_combine = combine
 
-df = pd.DataFrame(data_combine)
+
+data_combine10 = data_combine[::2, :]
+
+
+
+df = pd.DataFrame(data_combine10)
 df.to_csv(r"D:\轨迹预测\diff_xyz.csv")
 
 
 time_step = 40
-batch_size = 50
+batch_size = 100
 # hidden_size = 5
 layer_num = 2
 
@@ -235,7 +240,7 @@ if __name__=='__main__':
         MAEscalar = np.zeros((6, 70))
         train_mse = []
 
-        for t in range(0, 1, 1):
+        for t in range(1, 2, 1):
             tf.reset_default_graph()
             sess = tf.Session()
             init = tf.global_variables_initializer()
@@ -255,6 +260,9 @@ if __name__=='__main__':
             for i in range(1, j):
                 xs = np.vstack((xs, np.array(x[i])))
                 ys = np.vstack((ys, np.array(y[i])))
+
+            xs = xs[::4, :]
+            ys = ys[::4, :]
 
             m = len(xs)
 

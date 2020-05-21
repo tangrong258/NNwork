@@ -82,28 +82,28 @@ for i in range(0, len(sq_set)):
         sq_set_diff[i][j][4] = sq_set[i][j][4]
 
 
+for i in range(0, len(sq_set_diff)):
+    scalar = MinMaxScaler(feature_range=(0, 1))
+    sq_set_diff[i] = scalar.fit_transform(np.array(sq_set_diff[i])).squeeze()
 
-# for i in range(0, len(sq_set_diff)):
-#     scalar = MinMaxScaler(feature_range=(0, 1))
-#     sq_set_diff[i] = scalar.fit_transform(np.array(sq_set_diff[i])).squeeze()
-
-data_combine = np.array(sq_set_diff[0])
+data_combine5 = np.array(sq_set_diff[0])
 for i in range(1, len(sq_set_diff)):
     data_i = np.array(sq_set_diff[i])
-    combine = np.vstack((data_combine, data_i))
-    data_combine = combine
+    combine = np.vstack((data_combine5, data_i))
+    data_combine5 = combine
 
-scalar = MinMaxScaler(feature_range=(0, 1))
-data_combine = scalar.fit_transform(data_combine)
+data_combine15 = data_combine5[::1, :]
+# scalar = MinMaxScaler(feature_range=(0, 1))
+# data_combine = scalar.fit_transform(data_combine15)
 
 df = pd.DataFrame(data_combine)
 df.to_csv(r"D:\轨迹预测\diff_xyz.csv")
 
 
 
-time_step = 50
-batch_size = 256
-hidden_size = 70
+time_step = 40
+batch_size = 200
+hidden_size = 5
 # layer_num = 1
 output_size = ((1, 3))
 class_num = 3
@@ -217,7 +217,7 @@ if __name__=='__main__':
     sess.run(init)
     MAEscalar = np.zeros((2, 10))
 
-    for t in range(1, 3, 2):
+    for t in range(2, 3, 1):
         layer_num = t
 
         xs, ys = generate_data(data_combine)
@@ -226,16 +226,7 @@ if __name__=='__main__':
         train_end = int(len(xs) * 0.9)
         test_end = int(len(xs))
 
-        if t == 1:
-            train_step = 5000
-        if t == 3:
-            train_step = 8000
-        if t == 5:
-            train_step = 5000
-        if t == 7:
-            train_step = 6000
-        if t == 9:
-            train_step = 6000
+        train_step = 3000
 
         test_step = (test_end - train_end) // batch_size
 
