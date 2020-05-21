@@ -6,10 +6,6 @@ from sklearn.preprocessing import MinMaxScaler
 import time
 import pickle
 import math
-from openpyxl import load_workbook
-from matplotlib import pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-import xlsxwriter
 from UVA_classification import UAVClassification
 
 data = pd.read_excel(r"D:\轨迹预测\2.xlsx", sheet_name='四旋翼')
@@ -27,8 +23,7 @@ v = data.v._values
 
 or_data = np.vstack((altitude, xz, yz, speed, vy)).T
 
-with open(r"D:\轨迹预测\or_data.pkl", 'wb') as f:
-    pickle.dump(or_data, f)
+
 
 start = []
 for i in range(1, len(flightTime)):
@@ -87,8 +82,8 @@ data_combine = scalar.fit_transform(data_combine)
 
 
 # 预测水平或者垂直方向
-class_num = class_num_horizontal
-data_labels = classification.labels_horizontal
+class_num = class_num_vertical
+data_labels = classification.labels_vertical
 
 time_step = 50
 batch_size = 200
@@ -173,7 +168,7 @@ if __name__=='__main__':
     sess.run(init)
     MAEscalar = np.zeros((2, 10))
 
-    for t in range(7, 9, 2):
+    for t in range(3, 5, 2):
         layer_num = t
 
         xs, ys = generate_data(data_combine, data_labels)

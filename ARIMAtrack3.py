@@ -9,7 +9,7 @@ import statsmodels.api as sm
 from sklearn.preprocessing import MinMaxScaler
 from statsmodels.graphics.api import qqplot
 from datetime import *
-import xlsxwriter
+
 
 from openpyxl import load_workbook
 # time_step = 40
@@ -43,15 +43,11 @@ if __name__ == '__main__':
     for t in range(5, 6):
         time_step = t*5 + 5
 
-        with open(r"D:\轨迹预测\prediction\ARIMA\test_x.pkl", 'rb') as f:
+        root = r"D:\轨迹预测\prediction\ARIMA\nonscalar"
+        with open(root + '\\' + 'test_x' + str(time_step) + ".pkl", 'rb') as f:
             test_x6 = pickle.load(f)
-        with open(r"D:\轨迹预测\prediction\ARIMA\test_y.pkl", 'rb') as f:
+        with open(root + '\\' + 'test_y' + str(time_step) + ".pkl", 'rb') as f:
             test_y6 = pickle.load(f)
-        # with open(r"D:\轨迹预测\prediction\ARIMA\test_y12.pkl", 'rb') as f:
-        #     test_y6 = pickle.load(f)
-        # with open(r"D:\轨迹预测\prediction\ARIMA\test_y123.pkl", 'rb') as f:
-        #     test_y6 = pickle.load(f)
-        # predhxy = np.zeros((50, 3))
 
         st = len(test_y6)-100
         MAE = np.zeros((3, 100))

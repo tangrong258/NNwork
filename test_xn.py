@@ -7,7 +7,7 @@ from openpyxl import load_workbook
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import pickle
-import xlsxwriter
+
 
 
 data = pd.read_excel(r"D:\轨迹预测\2.xlsx", sheet_name='四旋翼')
@@ -59,6 +59,9 @@ for i in range(0, len(sq_set)):
     sq_set[i][0][2] = 0
 sq_set_diff = sq_set
 
+#  以上一个点作为原点，计算坐标
+# sq_set_diff = sq_set  # 不能这样写，diff改变，sq_set也会改变, 也不能用array，因为list长度不一样，怎么办呢
+
 # sq_set_diff = [[] for i in range(len(sq_set))]
 # for i in range(0, len(sq_set)):
 #     sq_set_diff[i] = [[[] for l in range(5)]for k in range(len(sq_set[i]))]
@@ -100,7 +103,7 @@ dt2.to_csv(r"D:\轨迹预测\prediction\upper.csv")
 #     sq_set_diff[i] = scalar.fit_transform(sq_set_diff[i]).squeeze()
 
 
-# time_step = 10
+
 batch_size = 40
 hidden_size =15
 layer_num = 3
@@ -154,7 +157,7 @@ if __name__=='__main__':
         test_x = xs[train_end:test_end]
         test_y = ys[train_end:test_end]
 
-        root = r"D:\轨迹预测\prediction\ARIMA\scalar"
+        root = r"D:\轨迹预测\prediction\ARIMA\nonscalar"
         with open(root + '\\' + 'train_x' + str(time_step) + ".pkl", 'wb') as f:
             pickle.dump(train_x, f)
         with open(root + '\\' + 'train_y' + str(time_step) + ".pkl", 'wb') as f:

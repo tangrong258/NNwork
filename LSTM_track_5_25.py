@@ -8,7 +8,6 @@ import pickle
 from openpyxl import load_workbook
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import xlsxwriter
 
 
 data = pd.read_excel(r"D:\轨迹预测\2.xlsx", sheet_name='四旋翼')
@@ -28,18 +27,7 @@ or_data = np.vstack((altitude, xz, yz, speed, vy)).T
 
 with open(r"D:\轨迹预测\or_data.pkl", 'wb') as f:
     pickle.dump(or_data, f)
-# or_data = np.zeros((len(flightTime), 5))
-# for i in range(0, or_data.shape[0]):
-#     or_data[i, 0] = altitude[i]
-#     or_data[i, 1] = speed[i]
-#     or_data[i, 2] = xz[i]
-#     or_data[i, 3] = yz[i]
-#     or_data[i, 4] = vy[i]
-#     # or_data[i, 5] = v[i]
 
-
-# scalar = MinMaxScaler(feature_range=(0, 1))
-# or_data = scalar.fit_transform(or_data).squeeze()
 
 start = []
 for i in range(1, len(flightTime)):
@@ -59,36 +47,36 @@ for j in range(start[-1], len(flightTime)):
     sq_set[-1].append(or_data[j])
 
 # 以第一个点作为原点，计算坐标
-for i in range(0, len(sq_set)):
-    for j in range(1, len(sq_set[i])):
-        sq_set[i][j][0] = sq_set[i][j][0] - sq_set[i][0][0]
-        sq_set[i][j][1] = sq_set[i][j][1] - sq_set[i][0][1]
-        sq_set[i][j][2] = sq_set[i][j][2] - sq_set[i][0][2]
-
-for i in range(0, len(sq_set)):
-    sq_set[i][0][0] = 0
-    sq_set[i][0][1] = 0
-    sq_set[i][0][2] = 0
-
-sq_set_diff = sq_set
+# for i in range(0, len(sq_set)):
+#     for j in range(1, len(sq_set[i])):
+#         sq_set[i][j][0] = sq_set[i][j][0] - sq_set[i][0][0]
+#         sq_set[i][j][1] = sq_set[i][j][1] - sq_set[i][0][1]
+#         sq_set[i][j][2] = sq_set[i][j][2] - sq_set[i][0][2]
+#
+# for i in range(0, len(sq_set)):
+#     sq_set[i][0][0] = 0
+#     sq_set[i][0][1] = 0
+#     sq_set[i][0][2] = 0
+#
+# sq_set_diff = sq_set
 
 #  以上一个点作为原点，计算坐标
-# sq_set_diff = sq_set #不能这样写，diff改变，sq_set也会改变, 也不能用array，因为list长度不一样，怎么办呢
+# sq_set_diff = sq_set  # 不能这样写，diff改变，sq_set也会改变, 也不能用array，因为list长度不一样，怎么办呢
 
-# sq_set_diff = [[] for i in range(len(sq_set))]
-# for i in range(0, len(sq_set)):
-#     sq_set_diff[i] = [[[] for l in range(5)]for k in range(len(sq_set[i]))]
-#     sq_set_diff[i][0][0] = 0
-#     sq_set_diff[i][0][1] = 0
-#     sq_set_diff[i][0][2] = 0
-#     sq_set_diff[i][0][3] = 0
-#     sq_set_diff[i][0][4] = 0
-#     for j in range(1, len(sq_set[i])):
-#         sq_set_diff[i][j][0] = sq_set[i][j][0] - sq_set[i][j-1][0]
-#         sq_set_diff[i][j][1] = sq_set[i][j][1] - sq_set[i][j-1][1]
-#         sq_set_diff[i][j][2] = sq_set[i][j][2] - sq_set[i][j-1][2]
-#         sq_set_diff[i][j][3] = sq_set[i][j][3]
-#         sq_set_diff[i][j][4] = sq_set[i][j][4]
+sq_set_diff = [[] for i in range(len(sq_set))]
+for i in range(0, len(sq_set)):
+    sq_set_diff[i] = [[[] for l in range(5)]for k in range(len(sq_set[i]))]
+    sq_set_diff[i][0][0] = 0
+    sq_set_diff[i][0][1] = 0
+    sq_set_diff[i][0][2] = 0
+    sq_set_diff[i][0][3] = 0
+    sq_set_diff[i][0][4] = 0
+    for j in range(1, len(sq_set[i])):
+        sq_set_diff[i][j][0] = sq_set[i][j][0] - sq_set[i][j-1][0]
+        sq_set_diff[i][j][1] = sq_set[i][j][1] - sq_set[i][j-1][1]
+        sq_set_diff[i][j][2] = sq_set[i][j][2] - sq_set[i][j-1][2]
+        sq_set_diff[i][j][3] = sq_set[i][j][3]
+        sq_set_diff[i][j][4] = sq_set[i][j][4]
 
 diff = np.zeros((len(sq_set), 3))
 lower = np.zeros((len(sq_set), 3))
@@ -129,12 +117,11 @@ df.to_csv(r"D:\轨迹预测\diff_xyz.csv")
 
 
 time_step = 40
-batch_size = 256
+batch_size = 50
 # hidden_size = 5
-layer_num = 3
+layer_num = 2
 
-output_size = ((1, 1))
-
+output_size = ((1, 3))
 
 
 def generate_data(sq):
@@ -150,24 +137,20 @@ def generate_data(sq):
 
 
 def lstm_model(x, y,  is_training):
-    cell_f = tf.nn.rnn_cell.MultiRNNCell([tf.nn.rnn_cell.GRUCell(hidden_size)
+    cell_f = tf.nn.rnn_cell.MultiRNNCell([tf.nn.rnn_cell.LSTMCell(hidden_size)
                                         for _ in range(layer_num)])
     # cell_b = tf.nn.rnn_cell.MultiRNNCell([tf.nn.rnn_cell.GRUCell(20)
     #                                     for _ in range(2)])
     outputs, _ = tf.nn.dynamic_rnn(cell_f, x, dtype=tf.float32)
     output = outputs[:, -1, :]
-    # outputs, _ = tf.nn.bidirectional_dynamic_rnn(cell_f, cell_b, x, dtype=tf.float32)
-    # outputs_f, outputs_b = outputs
-    # output_f = outputs_f[:, -1, :] #[batchsize,hiddensize]
-    # output_b = outputs_b[:, -1, :]
-    # output = (output_f + output_b)/2
+
 
     nonpredictions = tf.contrib.layers.fully_connected(output, output_size[0] * output_size[1], activation_fn = None )
     predictions = tf.nn.leaky_relu(nonpredictions,alpha = 0.1, name = None)
     if not is_training:
         return predictions, None, None
 
-    predictions = tf.nn.dropout(predictions, 0.95)
+    predictions = tf.nn.dropout(predictions, 0.99)
 
 
     mse = [[] for i in range(output_size[0] * output_size[1])]
@@ -179,23 +162,34 @@ def lstm_model(x, y,  is_training):
     global_step = tf.Variable(0)
     LR = tf.train.exponential_decay(0.1, global_step, int(m / batch_size), 0.96, staircase=True)
     train_op = tf.contrib.layers.optimize_loss(loss,tf.train.get_global_step(),optimizer=opt, learning_rate=LR)
-    return predictions,loss,train_op
+    return predictions, loss, train_op
 
 
-def train(sess,x,y):
+def train(sess, x, y):
     ds = tf.data.Dataset.from_tensor_slices((x,y))
     ds = ds.repeat().shuffle(1000).batch(batch_size)
     x,y = ds.make_one_shot_iterator().get_next()
     # x = x.eval(session = sess)
     # y = y.eval(session = sess)
-    with tf.variable_scope("model",reuse = tf.AUTO_REUSE):
+    with tf.variable_scope("model", reuse=tf.AUTO_REUSE):
         _, train_op, lossor = lstm_model(x, y, True)
 
     sess.run(tf.global_variables_initializer())
+    train_loss = np.zeros(train_step)
+    train_time = np.zeros(train_step)
+    time_line = 0
     for i in range(train_step):
+        time_s = time.time()
         _, loss = sess.run([train_op,lossor])
+        time_e = time.time()
+        time_line = time_line + (time_e - time_s)
+        train_time[i] = time_line
+        train_loss[i] = loss
         if i % 100 == 0:
             print('lost: ' + str(i), loss)
+
+    return train_time, train_loss
+
 def test(sess,x,y, test_step):
     pred_y = np.zeros((test_step * batch_size,  y.shape[1]))
     errorcsv = np.zeros((test_step * batch_size, 3))
@@ -212,7 +206,7 @@ def test(sess,x,y, test_step):
         pred_y[i * batch_size:(i + 1) * batch_size, :] = pred
 
 
-        mse = np.zeros((ys.shape[0],ys.shape[1]))
+        mse = np.zeros((ys.shape[0], ys.shape[1]))
         mae = np.zeros((ys.shape[0],ys.shape[1]))
         mape = np.zeros((ys.shape[0], ys.shape[1]))
         for k in range(0, ys.shape[1]):
@@ -226,7 +220,7 @@ def test(sess,x,y, test_step):
         MSE = np.mean(mse,axis = 1)
         MAE = np.mean(mae,axis = 1)
         MAPE = np.mean(mape,axis = 1)
-        ERROR = [MSE,MAE,MAPE]
+        ERROR = [MSE, MAE, MAPE]
         # print("teststep:",i,ERROR)
         for e in range(0, 3):
             errorcsv[i*batch_size:(i+1)*batch_size, e] = ERROR[e]
@@ -235,57 +229,54 @@ def test(sess,x,y, test_step):
 
 
 if __name__=='__main__':
+    no_name = [[] for _ in range(1)]
+    for bb in range(10):
 
-    MAEscalar = np.zeros((6, 70))
+        MAEscalar = np.zeros((6, 70))
+        train_mse = []
 
-    for t in range(1, 5, 1):
-        tf.reset_default_graph()
-        sess = tf.Session()
-        init = tf.global_variables_initializer()
-        sess.run(init)
-        hidden_size = (t + 1) * 5
-        x = [[] for i in range(10000)]
-        y = [[] for i in range(10000)]
-        j = 0
-        for i in range(0, len(sq_set_diff)):
-            if len(sq_set_diff[i]) - time_step > 1:
-                x[j], y[j] = generate_data(sq_set_diff[i])   #  这样算完，每一个x[i].shape is [batch_num[i], time_step, input_size]
-                j = j + 1
+        for t in range(0, 1, 1):
+            tf.reset_default_graph()
+            sess = tf.Session()
+            init = tf.global_variables_initializer()
+            sess.run(init)
+            hidden_size = (t + 1) * 5
+            x = [[] for i in range(10000)]
+            y = [[] for i in range(10000)]
+            j = 0
+            for i in range(0, len(sq_set_diff)):
+                if len(sq_set_diff[i]) - time_step > 1:
+                    x[j], y[j] = generate_data(sq_set_diff[i])   #  这样算完，每一个x[i].shape is [batch_num[i], time_step, input_size]
+                    j = j + 1
 
-        xs = np.array(x[0])
-        ys = np.array(y[0])
+            xs = np.array(x[0])
+            ys = np.array(y[0])
 
-        for i in range(1, j):
-            xs = np.vstack((xs, np.array(x[i])))
-            ys = np.vstack((ys, np.array(y[i])))
+            for i in range(1, j):
+                xs = np.vstack((xs, np.array(x[i])))
+                ys = np.vstack((ys, np.array(y[i])))
 
-        m = len(xs)
+            m = len(xs)
 
-        train_end = int(len(xs) * 0.75)
-        test_end = int(len(xs))
+            train_end = int(len(xs) * 0.75)
+            test_end = int(len(xs))
 
-        train_step = 5000
-
-
-        test_step = (test_end - train_end) // batch_size
-
-        train_x = xs[0:train_end]
-        train_y = ys[0:train_end]
-        test_x = xs[train_end:test_end]
-        test_y = ys[train_end:test_end]
+            train_step = 3000
 
 
-        ceshiji = np.reshape(test_x, [-1, 5])
-        dt1 = pd.DataFrame(ceshiji)
-        dt1.to_csv(r"D:\轨迹预测" + '\\' + '测试集x' + str(time_step) + ".csv",)
-        dt2 = pd.DataFrame(test_y)
-        dt2.to_csv(r"D:\轨迹预测" + '\\' + '测试集y' + str(time_step) + ".csv",)
-        root = r"D:\轨迹预测\prediction"
-        sub_set = ["GRU"]
-        for s in range(0, 1):
-            sub = sub_set[s]
-            optimizer = ["Adagrad"]
-            for n in range(0, test_y.shape[1]):
+            test_step = (test_end - train_end) // batch_size
+
+            train_x = xs[0:train_end]
+            train_y = ys[0:train_end]
+            test_x = xs[train_end:test_end]
+            test_y = ys[train_end:test_end]
+
+            root = r"D:\轨迹预测\prediction"
+            sub_set = ["LSTM"]
+            for s in range(0, 1):
+                sub = sub_set[s]
+                optimizer = ["Adagrad"]
+                # for n in range(0, test_y.shape[1]):
                 for p in range(0, len(optimizer)):
                     opt = optimizer[p]
                     b = os.path.exists(root + "\\" + sub + "\\" + opt)
@@ -293,24 +284,33 @@ if __name__=='__main__':
                         print("path exist")
                     else:
                         os.makedirs(root + "\\" + sub + "\\" + opt)
-                    train_y1 = np.zeros((train_y.shape[0], 1), dtype=np.float32)
-                    test_y1 = np.zeros((test_y.shape[0], 1), dtype=np.float32)
-                    for i in range(train_y.shape[0]):
-                        train_y1[i, 0] = train_y[i, n]
-
-                    for i in range(test_y.shape[0]):
-                        test_y1[i, 0] = test_y[i, n]
+                    # train_y1 = np.zeros((train_y.shape[0], 1), dtype=np.float32)
+                    # test_y1 = np.zeros((test_y.shape[0], 1), dtype=np.float32)
+                    # for i in range(train_y.shape[0]):
+                    #     train_y1[i, 0] = train_y[i, n]
+                    #
+                    # for i in range(test_y.shape[0]):
+                    #     test_y1[i, 0] = test_y[i, n]
 
                     time_start = time.time()
-                    train(sess, train_x, train_y1)
-                    pred, errorcsv = test(sess, test_x, test_y1, test_step)
+                    time_train, loss_train = train(sess, train_x, train_y)
+                    train_mse.append([time_train, loss_train])
+                    pred, errorcsv = test(sess, test_x, test_y, test_step)
                     time_end = time.time()
-                    MAEscalar[n+3, t] = time_end-time_start
+                    MAEscalar[1, t] = time_end-time_start
 
-                    MAEscalar[n, t] = np.mean(errorcsv[:, 1])
-
-            dt = pd.DataFrame(MAEscalar)
-            dt.to_csv(root + "\\" + sub + "\\" + "MAE5_50.csv")
+                    MAEscalar[0, t] = np.mean(errorcsv[:, 1])
 
 
+        for i in range(len(train_mse)):
+            no_name[i].append(train_mse[i])
+            # dt = pd.DataFrame(np.array(train_mse[i]).T)
+            # dt.to_csv(root + "\\" + sub + "\\" + "train_loss" + str(i) + '_' + str(bb) + ".csv")
 
+        # dt = pd.DataFrame(MAEscalar)
+        # dt.to_csv(root + "\\" + sub + "\\" + "MAE5_50.csv")
+
+    for tt in range(len(no_name)):
+        To_excel = np.mean(np.array(no_name[tt]), 0)
+        dt = pd.DataFrame(To_excel.T)
+        dt.to_csv(root + "\\" + sub + "\\" + "train_loss" + '_mean' + str(tt) + ".csv")

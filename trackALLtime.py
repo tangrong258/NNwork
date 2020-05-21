@@ -8,7 +8,7 @@ from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
 import seaborn as sns
-
+from sklearn.preprocessing import MinMaxScaler
 
 from matplotlib.font_manager import FontProperties as FP
 plt.rc('font', family='Times New Roman')
@@ -24,25 +24,36 @@ Longitude_xishu = 1.08
 
 # pred_true_values line
 """
+
 data_LSTM = pd.read_csv(r"D:\轨迹预测\prediction\LSTM\pred_y.csv")
 data_GRU = pd.read_csv(r"D:\轨迹预测\prediction\GRU\pred_y.csv")
+data_BP = pd.read_csv(r"D:\轨迹预测\prediction\BP\pred_y10.csv")
 data_SVR = pd.read_csv(r"D:\轨迹预测\prediction\SVR\pred_y.csv")
 data_GM = pd.read_csv(r"D:\轨迹预测\prediction\GM\pred_y.csv")
-data_y = pd.read_csv(r"D:\轨迹预测\prediction\GM\test_y.csv")
+data_ARIMA = pd.read_csv(r"D:\轨迹预测\prediction\ARIMA\pred_y.csv")
+data_testy = pd.read_csv(r"D:\轨迹预测\prediction\ARIMA\test_y500.csv")
 
 pred_LSTM = data_LSTM._values[:, 1:4]
 ys = data_LSTM._values[:, 4:7]
-y = data_y._values[:, 1:4]
 pred_GRU = data_GRU._values[:, 1:4]
+pred_BP = data_BP._values[:, 1:4]
 pred_SVR = data_SVR._values[:, 1:4]
 pred_GM = data_GM._values[:, 1:4]
+pred_ARIMA = data_ARIMA._values[:, 1:4]
+ysarima = data_testy._values[:, 1:4]
 
+# scalar = MinMaxScaler(feature_range=(0, 1))
+# pred_ARIMA = scalar.fit_transform(pred_ARIMA).squeeze()
 
 def plottime_value(ys, pred, object, max_value, i, model_name, color_line):
     Z_start = 1000
     Z_end = 1300
     fig = plt.figure(figsize=(2.96, 2.22))
-    plt.plot(np.arange(Z_start, Z_end), ys[Z_start:Z_end, i], 'grey', linestyle='-', linewidth='1.5')
+    if np.max(pred) > 10:
+        plt.plot(np.arange(Z_start, Z_end), ysarima[0:Z_end - Z_start, i], 'grey', linestyle='-', linewidth='1.5')
+    else:
+        plt.plot(np.arange(Z_start, Z_end), ys[Z_start:Z_end, i], 'grey', linestyle='-', linewidth='1.5')
+
     if len(pred) > 1000:
         plt.plot(np.arange(Z_start + 50, Z_end), pred[Z_start + 50:Z_end, i], color_line, linestyle='--', linewidth='1.25')
     # plt.plot(np.arange(Z_start + 50, Z_end), pred2[Z_start + 50:Z_end, i], 'lime', linestyle='--', linewidth='1.25')
@@ -50,8 +61,18 @@ def plottime_value(ys, pred, object, max_value, i, model_name, color_line):
     # plt.plot(np.arange(Z_start + 50, Z_end), pred4[Z_start + 50:Z_end, i], 'violet', linestyle='--', linewidth='1.25')
     else:
         plt.plot(np.arange(Z_start + 50, Z_end), pred[50: Z_end - Z_start, i], color_line, linestyle='--', linewidth='1.25')
+
     plt.xticks(np.arange(Z_start, Z_end+50, 50), np.arange(0, int((Z_end-Z_start+50)*5), 250), fontsize=10.5)
-    plt.yticks(np.arange(0, 1.2, 0.2), np.arange(0, max_value+int(max_value/5), int(max_value/5)), fontsize=10.5)
+
+    if np.max(pred) < 10:
+        plt.yticks(np.arange(0, 1.2, 0.2), np.arange(0, max_value+int(max_value/5), int(max_value/5)), fontsize=10.5)
+    else:
+        lower = np.min(ysarima[:, i])
+        upper = np.max(ysarima[:, i])
+        plt.yticks(np.arange(lower,  upper + int((upper - lower) / 5), int((upper - lower) / 5)),
+                   np.arange(0, max_value + int(max_value / 5), int(max_value / 5)), fontsize=10.5)
+
+
     plt.xlabel(u'time', fontsize=10.5)
     plt.ylabel(object, fontsize=10.5)
     plt.grid(False)
@@ -60,14 +81,14 @@ def plottime_value(ys, pred, object, max_value, i, model_name, color_line):
 
 object = [u'Altitude', u'Latitude', u'Longitude']
 max_value = np.array([75, 165, 150])
-model_name = ['LSTM', 'GRU', 'SVR', 'GM']
-Color_line = ['red', 'violet', 'lime', 'cyan']
+model_name = ['LSTM', 'GRU', 'BP', 'SVR', 'GM', 'ARIMA']
+Color_line = ['red', 'violet', 'blue', 'lime', 'cyan', 'orange']
 
 for i in range(0, 3):
     for k in range(0, len(model_name)):
         plottime_value(ys, eval('pred_' + model_name[k]), object[i], max_value[i], i, model_name[k], Color_line[k])
-"""
 
+"""
 
 
 # pred_true_3D
@@ -102,7 +123,7 @@ plt.show()
 # hidden_layer1_8
 """
 
-data_laynum = pd.read_excel(r"C:\\Users\\tangrong\Desktop\轨迹预测实验结果.xlsx", sheet_name='hlayer1_8')
+data_laynum = pd.read_excel(r"C:\\Users\\TR\Desktop\轨迹预测实验结果.xlsx", sheet_name='hlayer1_8')
 data_Altitude = data_laynum._values[0:20:5, 1:]*Altitude_scalar*Altitude_xishu
 data_Latitude = data_laynum._values[1:21:5, 1:]*Latitude_scalar*Latitude_xishu
 data_Longitude = data_laynum._values[2:22:5, 1:]*Longitude_scalar*Longitude_xishu
@@ -163,7 +184,7 @@ for i in range(len(data_time)):
 # hidden_size & time_step 3D views
 """
 
-data_csize_tstep = pd.read_excel(r'C:\\Users\tangrong\Desktop\轨迹预测实验结果.xlsx', sheet_name='cell_step_2000')
+data_csize_tstep = pd.read_excel(r'C:\\Users\TR\Desktop\轨迹预测实验结果.xlsx', sheet_name='cell_step_2000')
 data_Altitude = data_csize_tstep._values[0::4, 1:]*Altitude_scalar*Altitude_xishu
 data_Latitude = data_csize_tstep._values[1::4, 1:]*Latitude_scalar*Latitude_xishu
 data_Longitude = data_csize_tstep._values[2::4, 1:]*Longitude_scalar*Longitude_xishu
@@ -247,16 +268,18 @@ for i in range(len(data_plot)):
 """
 
 
+
 # 3_MAE_4models
+"""
 
-
-# data = pd.read_excel(r'C:\\Users\tangrong\Desktop\轨迹预测实验结果.xlsx', sheet_name='error3d_WHLG')
-data = pd.read_excel(r'C:\\Users\tangrong\Desktop\轨迹预测实验结果.xlsx', sheet_name='error3d')
+# data = pd.read_excel(r'C:\\Users\TR\Desktop\轨迹预测实验结果.xlsx', sheet_name='error3d_WHLG')
+data = pd.read_excel(r'C:\\Users\TR\Desktop\轨迹预测实验结果.xlsx', sheet_name='error3d')
 GRU = data._values[0:3, 1:]
 LSTM = data._values[3:6, 1:]
 SVR = data._values[6:9, 1:]
 GM = data._values[9:12, 1:]
 ARIMA = data._values[12:15, 2:]
+BP = data._values[15:18, 1:]
 
 def plt_3(X, Model, model_name, y_ticks, color):
     plt.figure(figsize=(2.96, 2.22))
@@ -273,15 +296,15 @@ def plt_3(X, Model, model_name, y_ticks, color):
     # plt.title(u'Lstm', fontproperties=font_TNM)
     # plt.grid()
     plt.tight_layout()
-    # plt.savefig(r'C:\\Users\tangrong\Desktop\GRU武汉理工\武汉理工GRU\figures' + "\\" + model_name + ".png", dpi=300)
-    plt.savefig(r'D:\轨迹预测\prediction' + "\\" + model_name + ".png", dpi=300)
+    # plt.savefig(r'C:\\Users\TR\Desktop\GRU武汉理工\武汉理工GRU\figures' + "\\" + model_name + ".png", dpi=300)
+    # plt.savefig(r'D:\轨迹预测\prediction' + "\\" + model_name + ".png", dpi=300)
     plt.show()
 
 
-Model_name = ["GRU", "LSTM", "SVR", "GM", "ARIMA"]
+Model_name = ["GRU", "LSTM", "SVR", "GM", "ARIMA", "BP"]
 # color_set = [sns.xkcd_rgb['candy pink'], sns.xkcd_rgb['light green blue'], sns.xkcd_rgb['dark sky blue']]
 color_set = ['lime', 'cyan', 'orange']
-Data = [GRU, LSTM, SVR, GM, ARIMA]
+Data = [GRU, LSTM, SVR, GM, ARIMA, BP]
 for i in range(0, len(Data)):
     if Data[i].shape[1] == 10:
         X1 = np.arange(5, 55, 5)
@@ -323,23 +346,30 @@ for i in range(0, len(Data)):
     y_ticks = np.linspace(y_lower, y_upper, 5)
     plt_3(X1, Data[i], Model_name[i], y_ticks, color_set)
 
-
+"""
 
 
 # 1-2-3step
 """
 
-data = pd.read_excel(r'C:\\Users\tangrong\Desktop\轨迹预测实验结果.xlsx', sheet_name='4model_123')
-GRU = data._values[0:3, 1:data._values.shape[1]+1]
-LSTM = data._values[3:6, 1:data._values.shape[1]+1]
-SVR = data._values[6:9, 1:data._values.shape[1]+1]
-GM = data._values[9:12, 1:data._values.shape[1]+1]
+data = pd.read_excel(r'C:\\Users\TR\Desktop\轨迹预测实验结果.xlsx', sheet_name='4model_123')
+GRU = data._values[0:3, 1:]
+LSTM = data._values[3:6, 1:]
+SVR = data._values[6:9, 1:]
+GM = data._values[9:12, 1:]
+BP = data._values[12:15, 1:]
+ARIMA = data._values[15:18, 1:]  # arima不需要反归一化
 
-Altitude = data._values[0::3, 1:]*Altitude_scalar
-Latitude = data._values[1::3, 1:]*Latitude_scalar
-Longitude = data._values[2::3, 1:]* Longitude_scalar # 这个没有系数换算
 
-model_ticks = ['GRU', 'LSTM', 'SVR', 'GM']
+Altitude = data._values[[0, 3, 12], 1:]*Altitude_scalar
+Latitude = data._values[[1, 4, 13], 1:]*Latitude_scalar
+Longitude = data._values[[2, 5, 14], 1:]* Longitude_scalar # 这个没有系数换算
+
+Altitude = np.vstack((Altitude, data._values[15, 1:]))
+Latitude = np.vstack((Latitude, data._values[16, 1:]))
+Longitude = np.vstack((Longitude, data._values[17, 1:]))
+
+model_ticks = ['GRU', 'LSTM', 'BP', 'ARIMA']
 AL_color = ['lightgreen', 'limegreen', 'darkgreen']
 LA_color = ['skyblue', 'c', 'teal']
 LO_color = ['gold', 'orange', 'darkorange']
@@ -349,15 +379,15 @@ def bar123(data_set, model_tick, color, name):
     fig = plt.figure(figsize=(5.92, 2.22))
     ax1 = fig.add_subplot(111)
     bar_width = 0.2
-    ax1.bar(np.arange(0, len(model_tick), 1), data_set[:, 0], width=bar_width, color=color[0], label='one-step')
-    ax1.bar(np.arange(0, len(model_tick), 1)+bar_width, data_set[:, 1], width=bar_width, color=color[1], label='two-step', tick_label=model_tick)
-    ax1.bar(np.arange(0, len(model_tick), 1)+bar_width*2, data_set[:, 2], width=bar_width, color=color[2], label='three-step')
+    ax1.bar(np.arange(0, len(model_tick), 1), data_set[:, 0], width=bar_width, color=color[0], label='step1')
+    ax1.bar(np.arange(0, len(model_tick), 1)+bar_width, data_set[:, 1], width=bar_width, color=color[1], label='step2', tick_label=model_tick)
+    ax1.bar(np.arange(0, len(model_tick), 1)+bar_width*2, data_set[:, 2], width=bar_width, color=color[2], label='step3')
 
     if np.max(data_set) <= 5:
-        ytick_max = 5
+        ytick_max = 6
 
     if 5 < np.max(data_set) <= 10:
-        ytick_max = 10
+        ytick_max = 18
 
     if 10 < np.max(data_set) <= 20:
         ytick_max = 20
@@ -365,8 +395,8 @@ def bar123(data_set, model_tick, color, name):
     if 20 < np.max(data_set) <= 30:
         ytick_max = 30
 
-    ax1.set_yticks(np.linspace(0, ytick_max, 5))
-    ax1.set_yticklabels(np.linspace(0, ytick_max, 5), fontsize=10.5)
+    ax1.set_yticks(np.linspace(0, ytick_max, 7))
+    ax1.set_yticklabels(np.linspace(0, ytick_max, 7), fontsize=10.5)
     ax1.set_ylabel(u'MAE (m)', fontsize=10.5)
     plt.legend(loc=2)
     plt.savefig(r'D:\轨迹预测\prediction\123' + '\\' + name + '.png')
@@ -382,7 +412,7 @@ bar123(Longitude, model_ticks, LO_color, 'Longitude123')
 # 2-3-4 hidden_layer in 5-30-5 cell size (bar)
 """
 
-data = pd.read_excel(r'C:\\Users\tangrong\Desktop\轨迹预测实验结果.xlsx', sheet_name='2-3-4hidden layer 5-30-5')
+data = pd.read_excel(r'C:\\Users\TR\Desktop\轨迹预测实验结果.xlsx', sheet_name='2-3-4hidden layer 5-30-5')
 data = data._values
 
 for i in range(0, data.shape[0]):
@@ -448,7 +478,7 @@ def hidden_layer2_3_4(data, color, xticks):
     plt.legend(loc=1, ncol=3)
     plt.grid(axis='y', linestyle='--')
     plt.tight_layout()
-    plt.savefig(r'C:\\Users\tangrong\Desktop\GRU武汉理工\武汉理工GRU\figures\hidden2-3-4.png', dpi=400)
+    plt.savefig(r'C:\\Users\TR\Desktop\GRU武汉理工\武汉理工GRU\figures\hidden2-3-4.png', dpi=400)
     plt.show()
 
 x_ticks = []
@@ -464,10 +494,74 @@ hidden_layer2_3_4(data, color_set, x_ticks)
 
 """
 
+# hidden_size3 and cell size 5_30
+"""
+
+data = pd.read_excel(r'C:\\Users\TR\Desktop\轨迹预测实验结果.xlsx', sheet_name='hidden3_cell5_50')
+data = data._values[:, 1:]
+for i in range(0, data.shape[0]):
+    if i % 3 == 0:
+        data[i] = data[i] * Altitude_scalar
+    if (i-1) % 3 == 0:
+        data[i] = data[i] * Latitude_scalar
+    if (i-2) % 3 == 0:
+        data[i] = data[i] * Longitude_scalar
+
+def hidden_layer3(data, color, xticks, model_name):
+    fig = plt.figure(figsize=(5.92, 3.0))
+    ax1 = fig.add_subplot(111)
+    # fig, (ax1) = plt.subplots(figsize=(5.92, 2.22), nrow=1 )
+    bar_width = 0.2
+    # 先画3层时高度的图,
+    x2 = np.arange(0, len(xticks))
+    ax1.bar(x2, data[0, :], width=bar_width, color=color[0], label='Altitude')
+
+    # 在width后画3层的纬度图，把tick_label放在这里，居中, 后面的就不需要加label了
+    x5 = np.arange(0, len(xticks)) + bar_width
+    ax1.bar(x5, data[1, :], width=bar_width, color=color[1], tick_label=xticks, label='Latitude')
+
+    # 在2倍width后画3层的经度图
+    x8 = np.arange(0, len(xticks)) + 2 * bar_width
+    ax1.bar(x8, data[2, :], width=bar_width, color=color[2], label='Longitude')
+
+    # 加一点细节
+    ax1.set_yticks(np.linspace(0, 8, 5))
+    ax1.set_yticklabels(np.linspace(0, 8, 5), fontsize=10.5)
+    ax1.set_xlabel(u'Cell size', fontsize=10.5)
+    ax1.set_ylabel(u'MAE (m)')
+    # label放一列会遮盖
+    plt.legend(loc=1, ncol=3)
+    plt.grid(axis='y', linestyle='--')
+    plt.tight_layout()
+    plt.savefig(r'D:\轨迹预测\prediction' + "\\" + model_name + ".png", dpi=400)
+    plt.show()
+
+x_ticks = []
+for i in range(0, data.shape[1]):
+    if i >= data.shape[1] - 2:
+        if i == data.shape[1] - 2:
+            x_ticks.append(50)
+        else:
+            x_ticks.append(100)
+    else:
+        x_ticks.append((i+1) * 5)
+
+color_set = ['lime', 'cyan', 'orange']
+model_name = ['step5_hidden3', 'step40_hidden3']
+for step_num in range(2):
+    data_sub = data[step_num*3:(step_num+1)*3, :]
+    hidden_layer3(data_sub, color_set, x_ticks, model_name[step_num])
+
+"""
+
+
+
+
+
 # 5-30size,1:11:2 layer num
 """
 
-data = pd.read_excel(r'C:\\Users\tangrong\Desktop\轨迹预测实验结果.xlsx', sheet_name='hidden_paramer')
+data = pd.read_excel(r'C:\\Users\TR\Desktop\轨迹预测实验结果.xlsx', sheet_name='hidden_paramer')
 data = data._values
 
 for i in range(0, data.shape[0]):
@@ -480,7 +574,7 @@ for i in range(0, data.shape[0]):
 
 
 
-def plot_5_30_cell(x, y1, y2, y3, y4, color_set, y1_ticks, y2_ticks, title):
+def plot_5_30_234cell(x, y1, y2, y3, y4, color_set, y1_ticks, y2_ticks, title):
     fig = plt.figure(figsize=(2.96, 2.22))
     ax1 = fig.add_subplot(111)
     ax1.plot(x, y1, color=color_set[0], linestyle='--', linewidth=1.25, marker='^', markersize=6.0)
@@ -493,16 +587,14 @@ def plot_5_30_cell(x, y1, y2, y3, y4, color_set, y1_ticks, y2_ticks, title):
     ax1.set_xlabel(u'Number of hidden layers', fontsize=10.5)
     ax1.set_ylabel(u'MAE (m)', fontsize=10.5)
     ax1.grid(False)
-
     # ax2 = ax1.twinx()
     # ax2.plot(x, y4, color=color_set[3], linestyle='--', linewidth=1.25, marker='o', markersize=6.0)
     # ax2.set_yticks(y2_ticks)
     # ax2.set_yticklabels(y2_ticks, fontsize=10.5)
     # ax2.set_ylabel(u'Training time (sec)', fontsize=10.5)
     plt.tight_layout()
-    plt.savefig(r'C:\\Users\tangrong\Desktop\GRU武汉理工\武汉理工GRU\figures' + '\\' + 'hlayer_number' + title + '.png', dpi=400)
+    plt.savefig(r'C:\\Users\TR\Desktop\GRU武汉理工\武汉理工GRU\figures' + '\\' + 'hlayer_number' + title + '.png', dpi=400)
     plt.show()
-
 
 x_range = np.arange(1, 11, 2)
 color = [sns.xkcd_rgb['candy pink'], sns.xkcd_rgb['light green blue'], sns.xkcd_rgb['dark sky blue'], 'putty']
@@ -566,7 +658,7 @@ for i in range(len(file_name)):
     # time_upper_pro = time_lower + time_unit*(y2int_num+1)
     # y2ticks = np.arange(time_lower, time_upper_pro, time_unit)
 
-    plot_5_30_cell(x_range, data[set_start,:], data[set_start+1,:], data[set_start+2,:], 0,
+    plot_5_30_234cell(x_range, data[set_start,:], data[set_start+1,:], data[set_start+2,:], 0,
                    color, y1ticks, 0, file_name[i])
 """
 
@@ -594,3 +686,65 @@ plt.show()
 
 """
 
+
+# train loss plot
+# GRU_train = pd.read_excel(r'C:\\Users\TR\Desktop\轨迹预测实验结果.xlsx',
+#                           sheet_name='GRU_train_time')
+# GRU_time = np.mean(GRU_train._values[:, 1::2], 1)
+# GRU_mse = np.mean(GRU_train._values[:, 2::2], 1)
+# LSTM_train = pd.read_excel(r'C:\\Users\TR\Desktop\轨迹预测实验结果.xlsx',
+#                           sheet_name='LSTM_train_time')
+# LSTM_time = np.mean(LSTM_train._values[:, 1::2], 1)
+# LSTM_mse = np.mean(LSTM_train._values[:, 2::2], 1)
+
+GRU_train = pd.read_csv(r'D:\轨迹预测\prediction\GRU\train_loss_mean0.csv')
+GRU_time = GRU_train._values[:, 1]
+GRU_mse = GRU_train._values[:, 2]
+LSTM_train = pd.read_csv(r'D:\轨迹预测\prediction\LSTM\train_loss_mean0.csv')
+LSTM_time = LSTM_train._values[:, 1]
+LSTM_mse = LSTM_train._values[:, 2]
+
+def plot_train_time_loss(X1, Y1, X2, Y2, color, marker, labels):
+    fig = plt.figure(figsize=(2.96, 2.22))
+    ax = fig.add_subplot(111)
+    ax.plot(X1, Y1, color=color[0], linestyle='-', linewidth=1.25, marker=marker[0], markersize=2.0, label=labels[0])
+    ax.plot(X2, Y2, color=color[1], linestyle='-', linewidth=1.25, marker=marker[1], markersize=2.0, label=labels[1])
+    ceil_x = math.ceil(max(np.max(X1), np.max(X2)))
+    ax.set_xticks(np.linspace(0, ceil_x, ceil_x+1))
+    ax.set_xticklabels(np.linspace(0, ceil_x, ceil_x+1), fontsize=10.5)
+    ax.set_xlabel(u'Training Time (s)')
+    ax.set_ylabel(u'MSE')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+gru_time = np.zeros(31, dtype='float32')
+gru_mse = np.zeros(31, dtype='float32')
+
+for i in range(gru_mse.shape[0]):
+    if i % 2 == 0:
+        gru_time[i] = GRU_time[i*10]
+        gru_mse[i] = GRU_mse[i*10]
+    else:
+        gru_time[i] = GRU_time[i*10]
+        gru_mse[i] = np.mean(GRU_mse[(i-1)*10 + 1:(i+1)*10])
+
+
+lstm_time = np.zeros(31, dtype='float32')
+lstm_mse = np.zeros(31, dtype='float32')
+
+for i in range(lstm_mse.shape[0]):
+    if i % 2 == 0:
+        lstm_time[i] = LSTM_time[i*10]
+        lstm_mse[i] = LSTM_mse[i*10]
+    else:
+        lstm_time[i] = LSTM_time[i*10]
+        lstm_mse[i] = np.mean(LSTM_mse[(i-1)*10 + 1:(i+1)*10])
+
+color_set = ['green', 'red']
+marker_set = ['v', 's']
+labels_set = ['GRU_train', 'LSTM_train']
+
+plot_train_time_loss(gru_time, gru_mse, lstm_time, lstm_mse, color_set, marker_set, labels_set)
+plot_train_time_loss(GRU_time[0:100], GRU_mse[0:100], LSTM_time[0:100], LSTM_mse[0:100], color_set, marker_set, labels_set)

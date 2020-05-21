@@ -10,7 +10,7 @@ import math
 from openpyxl import load_workbook
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import xlsxwriter
+
 
 
 data = pd.read_excel(r"D:\轨迹预测\2.xlsx", sheet_name='四旋翼')

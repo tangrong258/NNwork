@@ -9,7 +9,7 @@ import statsmodels.api as sm
 from sklearn.preprocessing import MinMaxScaler
 from statsmodels.graphics.api import qqplot
 from datetime import *
-import xlsxwriter
+
 
 from openpyxl import load_workbook
 # time_step = 40
@@ -25,7 +25,7 @@ def ARIMA(testx, testy,time_step):
     # print(sm.stats.durbin_watson(arma_mod80.resid.values))
     stats.normaltest(resid)
     r, q, p = sm.tsa.acf(resid.values.squeeze(), qstat=True)
-    data = np.c_[range(1, 41), r[1:], q, p]#np.hstack, 对一个一维的向量操作，会默认是列向量, range 最多size（40）
+    data = np.c_[range(1, time_step), r[1:], q, p]#np.hstack, 对一个一维的向量操作，会默认是列向量, range 最多size（40）
     table = pd.DataFrame(data, columns=['lag', "AC", "Q", "Prob(>Q)"])
     # print(table.set_index('lag'))
     start = 1900 + len(timesq)
@@ -40,23 +40,31 @@ def ARIMA(testx, testy,time_step):
 if __name__ == '__main__':
 
     MAEscalar = np.zeros((3, 10))
-    for t in range(8, 10):
+    for t in range(1, 2):
         time_step = t*5 + 5
-        root = r"D:\轨迹预测\prediction\ARIMA\scalar"
+        root = r"D:\轨迹预测\prediction\ARIMA\nonscalar"
         with open(root + '\\' + 'test_x' + str(time_step) + ".pkl", 'rb') as f:
             test_x6 = pickle.load(f)
         with open(root + '\\' + 'test_y' + str(time_step) + ".pkl", 'rb') as f:
             test_y6 = pickle.load(f)
+        # test_xc = pd.read_csv(root + '\\' + 'test_x.csv')
+        # test_yc = pd.read_csv(root + '\\' + 'test_y.csv')
+        #
+        # test_x62 = test_xc._values
+        # test_y6 = test_yc._values
+        # test_x6 = np.reshape(test_x62, [-1, 10, 5])
 
-        predhxy = np.zeros((50, 3))
-        MAE = np.zeros((50, 3))
+        dt = pd.DataFrame(test_y6[1000:1500, :])
+        dt.to_csv(r"D:\轨迹预测\prediction\ARIMA" + "\\" + "test_y500.csv")
+        predhxy = np.zeros((500, 3))
+        MAE = np.zeros((500, 3))
         for k in range(0, 3):
             test_x = np.zeros((50, time_step), dtype=np.float32)
             test_y = np.zeros(50, dtype=np.float32)
             MAE_batch = np.zeros((10, 3), dtype=np.float32)
             for s in range(0, 10):
                 for i in range(0, 50):
-                    index = i+50*s+2500
+                    index = i+50*s+1000
                     print('index:', index)
                     test_y[i] = test_y6[index, k]
                     for j in range(time_step):
@@ -65,11 +73,13 @@ if __name__ == '__main__':
                 for i in range(0, len(test_y)):
                     testx = test_x[i]
                     testy = test_y[i]
-                    predhxy[i, k], MAE[i, k] = ARIMA(testx, testy, time_step)
+                    predhxy[i+50*s, k], MAE[i+50*s, k] = ARIMA(testx, testy, time_step)
                     MAE_batch[s, k] = np.mean(MAE[:, k])
             MAEscalar[k, t] = np.mean(MAE_batch[:, k])
         print("time_step:", time_step)
 
+        dt = pd.DataFrame(predhxy)
+        dt.to_csv(r"D:\轨迹预测\prediction\ARIMA" + "\\" + "pred_y.csv")
+
     dt = pd.DataFrame(MAEscalar)
     dt.to_csv(r"D:\轨迹预测\prediction\ARIMA" + "\\" + "MAE10_50.csv")
-

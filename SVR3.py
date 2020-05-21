@@ -4,10 +4,13 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVR
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+import statsmodels.formula.api as smf
+from scipy import stats
+import statsmodels.api as sm
 import numpy as np
 import pickle
 import pandas as pd
-import  xlsxwriter
+
 from openpyxl import load_workbook
 
 
@@ -91,17 +94,53 @@ MAEscalar = np.zeros((3, 10))
 
 
 
-with open(r"D:\轨迹预测\prediction\SVR\test_x.pkl", 'rb') as f:
+# with open(r"D:\轨迹预测\prediction\SVR\test_x.pkl", 'rb') as f:
+#     test_x = pickle.load(f)
+# with open(r"D:\轨迹预测\prediction\SVR\test_y.pkl", 'rb') as f:
+#     test_y = pickle.load(f)
+# with open(r"D:\轨迹预测\prediction\SVR\test_y12.pkl", 'rb') as f:
+#     test_y2 = pickle.load(f)
+# with open(r"D:\轨迹预测\prediction\SVR\test_y123.pkl", 'rb') as f:
+#     test_y3 = pickle.load(f)
+
+with open(r"D:\轨迹预测\prediction\ARIMA\test_x.pkl", 'rb') as f:
     test_x = pickle.load(f)
-with open(r"D:\轨迹预测\prediction\SVR\test_y.pkl", 'rb') as f:
+with open(r"D:\轨迹预测\prediction\ARIMA\test_y.pkl", 'rb') as f:
     test_y = pickle.load(f)
-with open(r"D:\轨迹预测\prediction\SVR\test_y12.pkl", 'rb') as f:
+with open(r"D:\轨迹预测\prediction\ARIMA\test_y12.pkl", 'rb') as f:
     test_y2 = pickle.load(f)
-with open(r"D:\轨迹预测\prediction\SVR\test_y123.pkl", 'rb') as f:
+with open(r"D:\轨迹预测\prediction\ARIMA\test_y123.pkl", 'rb') as f:
     test_y3 = pickle.load(f)
 
+def ARIMA(testx, testy,time_step):
+    timesq = pd.date_range(start="2018/1/01 00:00", periods = time_step, freq='30min')
+    dta = pd.Series(testx, timesq)
+    dta.index = pd.Index(sm.tsa.datetools.dates_from_range('1900', length=len(timesq)))
+    # dta = dta.diff().dropna()
+    arma_mod80 = sm.tsa.ARIMA(dta, (1, 0, 0)).fit()
+    # print(arma_mod80.aic, arma_mod80.bic, arma_mod80.hqic)
+    resid = arma_mod80.resid
+    # print(sm.stats.durbin_watson(arma_mod80.resid.values))
+    stats.normaltest(resid)
+    r, q, p = sm.tsa.acf(resid.values.squeeze(), qstat=True)
+    if time_step <= 40:
+        u = time_step
+    else:
+        u = 41
+    data = np.c_[range(1, u), r[1:], q, p]#np.hstack, 对一个一维的向量操作，会默认是列向量, range 最多size（40）
+    table = pd.DataFrame(data, columns=['lag', "AC", "Q", "Prob(>Q)"])
+    # print(table.set_index('lag'))
+    start = 1900 + len(timesq)
+    predict_dta = arma_mod80.predict(str(start), str(start), dynamic=True)
+    # print(predict_dta)
+    pred = np.array(predict_dta.array)
+    # a = np.square(testy - pred)
+    b = np.abs(testy - pred)
+    # c = np.abs(testy - pred) / testy
+    return pred, np.mean(b)
 
 
+"""
 pred1 = np.zeros((3000, 3))
 pred2 = np.zeros((1500, 3))
 pred3 = np.zeros((750, 3))
@@ -124,5 +163,39 @@ for k in range(0, 3):
     dt.to_csv(r"D:\轨迹预测\prediction\SVR\pred1.csv")
     dt = pd.DataFrame(MAEscalar)
     dt.to_csv(r"D:\轨迹预测\prediction\SVR\MAE123.csv")
+"""
+pred1 = np.zeros((1000, 3))
+mae1 = pred1
+pred2 = np.zeros((1000, 3))
+mae2 = pred2
+pred3 = np.zeros((1000, 3))
+mae3 = pred3
+
+low = 2000
+up = 1000
+for k in range(0, 3):
+    x = test_x[len(test_x) - low:len(test_x)-up, :, k]
+    y = test_y[len(test_x) - low:len(test_x)-up, k]
+    for i in range(0, len(x)):
+        pred1[i, k], mae1[i, k] = ARIMA(x[i], y[i], len(x[i]))
+    MAEscalar[k, 1] = np.mean(mae1[:, k])
+
+    x2 = np.hstack((x, np.reshape(pred1[:, k], [pred1.shape[0], 1])))
+    y2 = test_y2[len(test_x) - low:len(test_x)-up, -1, k]
+
+    for i in range(0, len(x2)):
+        pred2[i, k], mae2[i, k] = ARIMA(x2[i], y2[i], len(x2[i]))
+    MAEscalar[k, 2] = np.mean(mae2[:, k])
+
+    x3 = np.hstack((x2, np.reshape(pred2[:, k], [pred2.shape[0], 1])))
+    y3 = test_y3[len(test_x) - low:len(test_x)-up, -1, k]
+    for i in range(0, len(x3)):
+        pred3[i, k], mae3[i, k] = ARIMA(x3[i], y3[i], len(x3[i]))
+    MAEscalar[k, 3] = np.mean(mae3[:, k])
+
+    dt = pd.DataFrame(pred1)
+    dt.to_csv(r"D:\轨迹预测\prediction\ARIMA\pred1.csv")
+    dt = pd.DataFrame(MAEscalar)
+    dt.to_csv(r"D:\轨迹预测\prediction\ARIMA\MAE123.csv")
 
 

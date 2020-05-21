@@ -131,10 +131,6 @@ def run(col, epochs, look_back, period_spec=None, units=32):
     train_x = np.reshape(train_x, (train_x.shape[0], 5, train_x.shape[1]))
     test_x = np.reshape(test_x, (test_x.shape[0], 5, test_x.shape[1]))
 
-
-
-
-
     # if main_debug:
     #     print(train_y)
 
@@ -178,8 +174,6 @@ def run(col, epochs, look_back, period_spec=None, units=32):
 
     train_predict = model.predict(train_x)  # 得到的shape是还是三维的[samples, input_size, units=1]
     test_predict = model.predict(test_x)
-
-
 
     tmp_train_p = []
     for i in train_predict.tolist():  # array.tolist 转换为list, 长度就是第一个维度，第二维度是其中一个list的长度，以此类推，不存在array了
