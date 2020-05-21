@@ -102,9 +102,9 @@ dt2 = pd.DataFrame(upper)
 dt2.to_csv(r"D:\轨迹预测\prediction\upper.csv")
 
 #
-for i in range(0, len(sq_set)):
-    scalar = MinMaxScaler(feature_range=(0, 1))
-    sq_set_diff[i] = scalar.fit_transform(sq_set_diff[i]).squeeze()
+# for i in range(0, len(sq_set)):
+#     scalar = MinMaxScaler(feature_range=(0, 1))
+#     sq_set_diff[i] = scalar.fit_transform(sq_set_diff[i]).squeeze()
 
 time_step = 40
 batch_size = 1
@@ -290,13 +290,22 @@ if __name__=='__main__':
     #     pickle.dump(train_x, f)
     # with open(r"D:\轨迹预测\prediction\ARIMA\train_y.pkl", 'wb') as f:
     #     pickle.dump(train_y, f)
-    with open(r"D:\轨迹预测\prediction\SVR\test_x.pkl", 'wb') as f:
+    # with open(r"D:\轨迹预测\prediction\SVR\test_x.pkl", 'wb') as f:
+    #     pickle.dump(test_x, f)
+    # with open(r"D:\轨迹预测\prediction\SVR\test_y.pkl", 'wb') as f:
+    #     pickle.dump(test_y, f)
+    # with open(r"D:\轨迹预测\prediction\SVR\test_y12.pkl", 'wb') as f:
+    #     pickle.dump(test_y12, f)
+    # with open(r"D:\轨迹预测\prediction\SVR\test_y123.pkl", 'wb') as f:
+    #     pickle.dump(test_y123, f)
+
+    with open(r"D:\轨迹预测\prediction\ARIMA\test_x.pkl", 'wb') as f:
         pickle.dump(test_x, f)
-    with open(r"D:\轨迹预测\prediction\SVR\test_y.pkl", 'wb') as f:
+    with open(r"D:\轨迹预测\prediction\ARIMA\test_y.pkl", 'wb') as f:
         pickle.dump(test_y, f)
-    with open(r"D:\轨迹预测\prediction\SVR\test_y12.pkl", 'wb') as f:
+    with open(r"D:\轨迹预测\prediction\ARIMA\test_y12.pkl", 'wb') as f:
         pickle.dump(test_y12, f)
-    with open(r"D:\轨迹预测\prediction\SVR\test_y123.pkl", 'wb') as f:
+    with open(r"D:\轨迹预测\prediction\ARIMA\test_y123.pkl", 'wb') as f:
         pickle.dump(test_y123, f)
 
     # X = np.reshape(test_x, [-1, 5])#周期10
