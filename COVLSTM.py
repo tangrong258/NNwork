@@ -141,7 +141,6 @@ class convLSTM2(object):
             self.compute_cost()
 
 
-
     def input_layer1(self):
         self.input_x1 = self.xs1
 

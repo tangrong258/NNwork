@@ -688,6 +688,8 @@ plt.show()
 
 
 # train loss plot
+
+
 # GRU_train = pd.read_excel(r'C:\\Users\TR\Desktop\轨迹预测实验结果.xlsx',
 #                           sheet_name='GRU_train_time')
 # GRU_time = np.mean(GRU_train._values[:, 1::2], 1)
@@ -698,11 +700,13 @@ plt.show()
 # LSTM_mse = np.mean(LSTM_train._values[:, 2::2], 1)
 
 GRU_train = pd.read_csv(r'D:\轨迹预测\prediction\GRU\train_loss_mean0.csv')
+# GRU_train = pd.read_excel(r'C:\Users\TR\Desktop\轨迹预测实验结果.xlsx', sheet_name='GRU_train_time')
 GRU_time = GRU_train._values[:, 1]
 GRU_mse = GRU_train._values[:, 2]
 LSTM_train = pd.read_csv(r'D:\轨迹预测\prediction\LSTM\train_loss_mean0.csv')
 LSTM_time = LSTM_train._values[:, 1]
 LSTM_mse = LSTM_train._values[:, 2]
+
 
 def plot_train_time_loss(X1, Y1, X2, Y2, color, marker, labels):
     fig = plt.figure(figsize=(2.96, 2.22))
@@ -748,3 +752,22 @@ labels_set = ['GRU_train', 'LSTM_train']
 
 plot_train_time_loss(gru_time, gru_mse, lstm_time, lstm_mse, color_set, marker_set, labels_set)
 plot_train_time_loss(GRU_time[0:100], GRU_mse[0:100], LSTM_time[0:100], LSTM_mse[0:100], color_set, marker_set, labels_set)
+
+
+
+#
+"""
+root = r'D:\轨迹预测\prediction'
+Scaler = np.zeros((3, 10))
+
+for i in range(1, 11):
+    upper = pd.read_csv(root + '\\' + 'upper' + str(i) + '.csv')
+    lower = pd.read_csv(root + '\\' + 'lower' + str(i) + '.csv')
+    data_upper = np.mean(upper._values[:, 1:], axis=0)
+    data_lower = np.mean(lower._values[:, 1:], axis=0)
+    Scaler[:, i-1] = data_upper - data_lower
+
+dt = pd.DataFrame(Scaler)
+dt.to_csv(root + '\\' + 'Scaler1_10.csv')
+
+"""

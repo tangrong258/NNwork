@@ -62,44 +62,46 @@ for j in range(start[-1], len(flightTime)):
 
 #  以上一个点作为原点，计算坐标
 # sq_set_diff = sq_set  # 不能这样写，diff改变，sq_set也会改变, 也不能用array，因为list长度不一样，怎么办呢
+leng = []
+dt = 6
+for i in range(len(sq_set)):
+    if len(sq_set[i])-dt > 0:
+        leng.append(i)
 
-sq_set_diff = [[] for i in range(len(sq_set))]
-for i in range(0, len(sq_set)):
-    sq_set_diff[i] = [[[] for l in range(5)]for k in range(len(sq_set[i]))]
-    sq_set_diff[i][0][0] = 0
-    sq_set_diff[i][0][1] = 0
-    sq_set_diff[i][0][2] = 0
-    sq_set_diff[i][0][3] = 0
-    sq_set_diff[i][0][4] = 0
-    for j in range(1, len(sq_set[i])):
-        sq_set_diff[i][j][0] = sq_set[i][j][0] - sq_set[i][j-1][0]
-        sq_set_diff[i][j][1] = sq_set[i][j][1] - sq_set[i][j-1][1]
-        sq_set_diff[i][j][2] = sq_set[i][j][2] - sq_set[i][j-1][2]
-        sq_set_diff[i][j][3] = sq_set[i][j][3]
-        sq_set_diff[i][j][4] = sq_set[i][j][4]
+sq_set_diff = [[] for i in range(len(leng))]
+for i in range(len(leng)):
+    index = leng[i]
+    long = len(sq_set[index]) - dt
+    sq_set_diff[i] = [[[] for _ in range(5)]for k in range(long)]
+    for j in range(0, long):
+        sq_set_diff[i][j][0] = sq_set[index][j+dt][0] - sq_set[index][j][0]
+        sq_set_diff[i][j][1] = sq_set[index][j+dt][1] - sq_set[index][j][1]
+        sq_set_diff[i][j][2] = sq_set[index][j+dt][2] - sq_set[index][j][2]
+        sq_set_diff[i][j][3] = sq_set[index][j+dt][3]
+        sq_set_diff[i][j][4] = sq_set[index][j+dt][4]
 
-diff = np.zeros((len(sq_set), 3))
-lower = np.zeros((len(sq_set), 3))
-upper = np.zeros((len(sq_set), 3))
+
+diff = np.zeros((len(sq_set_diff), 3))
+lower = np.zeros((len(sq_set_diff), 3))
+upper = np.zeros((len(sq_set_diff), 3))
 ydian = np.zeros((1, or_data.shape[1]))
-for i in range(0, len(sq_set)):
+for i in range(0, len(sq_set_diff)):
     s = np.array(sq_set_diff[i])
     ydian = np.vstack((ydian, s))
     for j in range(0, 3):
         diff[i, j] = np.max(np.abs(s[:, j]))
         lower[i, j] = np.min(s[:, j])
         upper[i, j] = np.max(s[:, j])
-with open(r"D:\轨迹预测\ydian.pkl", 'wb') as f:
+
+with open(r"D:\轨迹预测\ydian" + str(dt) + ".pkl", 'wb') as f:
     pickle.dump(ydian, f)
 
 dt2 = pd.DataFrame(diff)
-dt2.to_csv(r"D:\轨迹预测\prediction\diff.csv")
+dt2.to_csv(r"D:\轨迹预测\prediction\diff" + str(dt) + ".csv")
 dt2 = pd.DataFrame(lower)
-dt2.to_csv(r"D:\轨迹预测\prediction\lower.csv")
+dt2.to_csv(r"D:\轨迹预测\prediction\lower" + str(dt) + ".csv")
 dt2 = pd.DataFrame(upper)
-dt2.to_csv(r"D:\轨迹预测\prediction\upper.csv")
-
-
+dt2.to_csv(r"D:\轨迹预测\prediction\upper" + str(dt) + ".csv")
 
 
 for i in range(0, len(sq_set_diff)):
@@ -113,15 +115,15 @@ for i in range(1, len(sq_set_diff)):
     data_combine = combine
 
 
-data_combine10 = data_combine[::2, :]
 
 
 
-df = pd.DataFrame(data_combine10)
+
+df = pd.DataFrame(data_combine)
 df.to_csv(r"D:\轨迹预测\diff_xyz.csv")
 
 
-time_step = 40
+time_step = 29
 batch_size = 100
 # hidden_size = 5
 layer_num = 2
@@ -149,14 +151,12 @@ def lstm_model(x, y,  is_training):
     outputs, _ = tf.nn.dynamic_rnn(cell_f, x, dtype=tf.float32)
     output = outputs[:, -1, :]
 
-
     nonpredictions = tf.contrib.layers.fully_connected(output, output_size[0] * output_size[1], activation_fn = None )
     predictions = tf.nn.leaky_relu(nonpredictions,alpha = 0.1, name = None)
-    if not is_training:
-        return predictions, None, None
-
     predictions = tf.nn.dropout(predictions, 0.99)
 
+    if not is_training:
+        return predictions, None, None
 
     mse = [[] for i in range(output_size[0] * output_size[1])]
     for i in range(0, y.shape[1]):
@@ -235,6 +235,7 @@ def test(sess,x,y, test_step):
 
 if __name__=='__main__':
     no_name = [[] for _ in range(1)]
+    MAE_avg = []
     for bb in range(10):
 
         MAEscalar = np.zeros((6, 70))
@@ -261,8 +262,6 @@ if __name__=='__main__':
                 xs = np.vstack((xs, np.array(x[i])))
                 ys = np.vstack((ys, np.array(y[i])))
 
-            xs = xs[::4, :]
-            ys = ys[::4, :]
 
             m = len(xs)
 
@@ -312,6 +311,7 @@ if __name__=='__main__':
 
         for i in range(len(train_mse)):
             no_name[i].append(train_mse[i])
+            MAE_avg.append(MAEscalar)
             # dt = pd.DataFrame(np.array(train_mse[i]).T)
             # dt.to_csv(root + "\\" + sub + "\\" + "train_loss" + str(i) + '_' + str(bb) + ".csv")
 
@@ -320,5 +320,8 @@ if __name__=='__main__':
 
     for tt in range(len(no_name)):
         To_excel = np.mean(np.array(no_name[tt]), 0)
+        MAE_toexcel = np.mean(np.array(MAE_avg), 0)
         dt = pd.DataFrame(To_excel.T)
         dt.to_csv(root + "\\" + sub + "\\" + "train_loss" + '_mean' + str(tt) + ".csv")
+        dt = pd.DataFrame(MAE_toexcel)
+        dt.to_csv(root + "\\" + sub + "\\" + "MAE" + '_mean' + ".csv")

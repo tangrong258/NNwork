@@ -88,7 +88,7 @@ def train(sess,train_x,train_y):
     with tf.variable_scope ("model"):
         predictions,loss,train_op = lstm_model(x,y,True)
 
-    sess.run(tf.global_variables_initializer() )
+    sess.run(tf.global_variables_initializer())
     for i in range(TRAINING_STEPS ):
         _,l = sess.run([train_op,loss])
         if i % 100 == 0:

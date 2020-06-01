@@ -16,7 +16,7 @@ def compute_accuracy(v_xs, v_ys):
 
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)#产生随机变量
-    return tf.Variable(initial)
+    return tf.Variable(initial)  # 用get_Variable, 不然test的时候会报错参数没有初始化，因为tf.Variable只会创建新的变量，而不是如果已存在就调用
 
 def bias_variable(shape):
     initial = tf.constant(0.1, shape=shape)
